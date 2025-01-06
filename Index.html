@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Info Inbox</title>
+    <meta name="theme-color" content="#2563eb">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Info Inbox">
+    <style>
+        body { 
+            font-family: system-ui; 
+            background: #f5f5f5; 
+            margin: 0; 
+            padding: 20px; 
+        }
+        .container { 
+            max-width: 600px; 
+            margin: 0 auto; 
+        }
+        .card { 
+            background: white; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+            padding: 16px;
+            position: relative;
+        }
+        .input-group { 
+            display: flex; 
+            flex-direction: column;
+            gap: 8px; 
+            margin-bottom: 16px;
+        }
+        .input-row {
+            display: flex;
+            gap: 8px;
+        }
+        .link-details {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+        .data-management {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .export-btn {
+            background: #059669;
+        }
+        .import-btn {
+            background: #7c3aed;
+        }
+        .hidden {
+            display: none;
+        }
+        #fileInput {
+            display: none;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        select, input { 
+            padding: 8px; 
+            border: 1px solid #ddd; 
+            border-radius: 4px; 
+        }
+        input { 
+            flex: 1; 
+        }
+        button { 
+            background: #2563eb; 
+            color: white; 
+            border: none; 
+            padding: 8px 16px; 
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .item { 
+            display: flex; 
+            flex-direction: column;
+            padding: 12px; 
+            border-bottom: 1px solid #eee; 
+        }
+        .item-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        .content { 
+            flex: 1; 
+        }
+        .link-card {
+            background: #f8f9fa;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            padding: 12px;
+            margin-top: 8px;
+        }
+        .link-title {
+            font-weight: 500;
+            color: #2563eb;
+            margin-bottom: 4px;
+        }
+        .link-description {
+            color: #666;
+            font-size: 0.875rem;
+            margin-bottom: 4px;
+        }
+        .link-url {
+            color: #2563eb;
+            text-decoration: none;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .link-url:hover {
+            text-decoration: underline;
+        }
+        .link-icon {
+            width: 16px;
+            height: 16px;
+            background: #ddd;
+            border-radius: 2px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #666;
+        }
+        .date { 
+            color: #666; 
+            font-size: 0.875rem; 
+            margin: 0 12px; 
+        }
+        .delete {
+            background: #ff4444;
+            padding: 4px 8px;
+        }
+        .category-label {
+            font-weight: bold;
+            padding: 12px;
+            background: #f8f9fa;
+            margin-top: 16px;
+            border-radius: 4px;
+        }
+        .item-type {
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-right: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .type-article { background: #e3f2fd; color: #1565c0; }
+        .type-fact { background: #f3e5f5; color: #7b1fa2; }
+        .type-todo { background: #e8f5e9; color: #2e7d32; }
+        .type-recipe { background: #fff3e0; color: #f57c00; }
+        .undo-notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #323232;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+            animation: slideUp 0.3s ease;
+        }
+        .undo-button {
+            background: transparent;
+            border: 1px solid white;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .manage-categories-btn {
+            margin-bottom: 16px;
+            background: #4b5563;
+        }
+        .category-manager {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .category-manager-content {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+        }
+        .category-manager h3 {
+            margin: 0 0 16px 0;
+        }
+        .add-category-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .categories-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .category-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .category-item button {
+            background: #ff4444;
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+        .close-btn {
+            margin-top: 16px;
+            width: 100%;
+            background: #4b5563;
+        }
+        @keyframes slideUp {
+            from { transform: translate(-50%, 100%); }
+            to { transform: translate(-50%, 0); }
+        }
+
+        /* PWA specific styles */
+        .install-prompt {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="data-management">
+                <button onclick="exportData()" class="export-btn">Export Data</button>
+                <input type="file" id="fileInput" accept=".json" onchange="importData(this.files[0])" />
+                <button onclick="document.getElementById('fileInput').click()" class="import-btn">Import Data</button>
+            </div>
+            <div class="input-group">
+                <div class="input-row">
+                    <select id="type">
+                        <option value="article">Article</option>
+                        <option value="fact">Fact</option>
+                        <option value="todo">Todo</option>
+                        <option value="recipe">Recipe</option>
+                    </select>
+                    <input type="text" id="newItem" placeholder="Add new item...">
+                    <button onclick="addItem()">Add</button>
+                </div>
+                <div id="linkDetails" class="link-details">
+                    <input type="text" id="linkTitle" placeholder="Title (optional)">
+                    <input type="text" id="linkDescription" placeholder="Description (optional)">
+                </div>
+            </div>
+            <button onclick="toggleCategoryManager()" class="manage-categories-btn">
+                Manage Categories
+            </button>
+            <div id="itemsList"></div>
+        </div>
+    </div>
+
+    <div id="categoryManager" class="category-manager">
+        <div class="category-manager-content">
+            <h3>Manage Categories</h3>
+            <div class="add-category-group">
+                <input type="text" id="newCategory" placeholder="New category name">
+                <button onclick="addCategory()">Add</button>
+            </div>
+            <div id="categoriesList" class="categories-list"></div>
+            <button onclick="toggleCategoryManager()" class="close-btn">Close</button>
+        </div>
+    </div>
+
+    <div id="installPrompt" class="install-prompt">
+        <p>Add Info Inbox to your home screen for quick access!</p>
+        <button onclick="installPWA()">Install</button>
+        <button onclick="hideInstallPrompt()">Not Now</button>
+    </div>
+    <script>
+        // PWA Registration and Installation
+        let deferredPrompt;
+        
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/info-inbox/sw.js')
+                    .then(function(registration) {
+                        console.log('ServiceWorker registration successful');
+                    })
+                    .catch(function(err) {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installPrompt').style.display = 'block';
+        });
+
+        function installPWA() {
+            const promptElement = document.getElementById('installPrompt');
+            promptElement.style.display = 'none';
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    deferredPrompt = null;
+                });
+            }
+        }
+
+        function hideInstallPrompt() {
+            document.getElementById('installPrompt').style.display = 'none';
+        }
+
+        // Main Application Code
+        let items = JSON.parse(localStorage.getItem('items') || '[]');
+        let deletedItem = null;
+        let undoTimeout = null;
+        let hasUnsavedChanges = false;
+        let originalItems = JSON.stringify(items);
+        let categories = JSON.parse(localStorage.getItem('categories') || '["article", "fact", "todo", "recipe"]');
+
+        function exportData() {
+            const data = {
+                items: items,
+                categories: categories
+            };
+            const dataStr = JSON.stringify(data);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `info_inbox_backup_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(file) {
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.items && Array.isArray(data.items)) {
+                        const confirmImport = confirm(
+                            `Import ${data.items.length} items? This will add to your existing items.`
+                        );
+                        if (confirmImport) {
+                            items = [...items, ...data.items];
+                            localStorage.setItem('items', JSON.stringify(items));
+                            
+                            if (data.categories && Array.isArray(data.categories)) {
+                                categories = [...new Set([...categories, ...data.categories])];
+                                localStorage.setItem('categories', JSON.stringify(categories));
+                                updateCategoryDropdown();
+                            }
+                            
+                            displayItems();
+                            alert('Data imported successfully!');
+                        }
+                    }
+                } catch (error) {
+                    alert('Error importing data. Please make sure the file is valid.');
+                    console.error('Import error:', error);
+                }
+            };
+            reader.readAsText(file);
+        }
+```javascript
+        function updateCategoryDropdown() {
+            const select = document.getElementById('type');
+            select.innerHTML = categories.map(category => 
+                `<option value="${category.toLowerCase()}">${category}</option>`
+            ).join('');
+        }
+
+        function toggleCategoryManager() {
+            const manager = document.getElementById('categoryManager');
+            if (manager.style.display === 'flex') {
+                manager.style.display = 'none';
+            } else {
+                manager.style.display = 'flex';
+                displayCategories();
+            }
+        }
+
+        function displayCategories() {
+            const list = document.getElementById('categoriesList');
+            list.innerHTML = categories.map(category => `
+                <div class="category-item">
+                    <span>${category}</span>
+                    <button onclick="deleteCategory('${category}')">&times;</button>
+                </div>
+            `).join('');
+        }
+
+        function addCategory() {
+            const input = document.getElementById('newCategory');
+            const category = input.value.trim();
+            
+            if (category && !categories.includes(category)) {
+                categories.push(category);
+                localStorage.setItem('categories', JSON.stringify(categories));
+                input.value = '';
+                displayCategories();
+                updateCategoryDropdown();
+            }
+        }
+
+        function deleteCategory(category) {
+            if (categories.length <= 1) {
+                alert('You must keep at least one category');
+                return;
+            }
+            
+            const confirmDelete = confirm(`Delete category "${category}"? Items in this category will not be deleted.`);
+            if (confirmDelete) {
+                categories = categories.filter(c => c !== category);
+                localStorage.setItem('categories', JSON.stringify(categories));
+                displayCategories();
+                updateCategoryDropdown();
+            }
+        }
+
+        function toggleLinkDetails() {
+            const linkDetails = document.getElementById('linkDetails');
+            const input = document.getElementById('newItem');
+            if (input.value.includes('http')) {
+                linkDetails.style.display = 'flex';
+                linkDetails.style.flexDirection = 'column';
+                linkDetails.style.gap = '8px';
+            } else {
+                linkDetails.style.display = 'none';
+            }
+        }
+
+        function getCleanUrl(url) {
+            try {
+                const urlObj = new URL(url);
+                return urlObj.hostname.replace('www.', '');
+            } catch {
+                return url;
+            }
+        }
+
+        function displayItems() {
+            const list = document.getElementById('itemsList');
+            list.innerHTML = '';
+            
+            const groupedItems = items.reduce((groups, item) => {
+                if (!groups[item.type]) {
+                    groups[item.type] = [];
+                }
+                groups[item.type].push(item);
+                return groups;
+            }, {});
+            
+            categories.forEach(type => {
+                const typeItems = groupedItems[type.toLowerCase()] || [];
+                if (typeItems.length > 0) {
+                    const categoryDiv = document.createElement('div');
+                    categoryDiv.innerHTML = `<div class="category-label">${type}</div>`;
+                    list.appendChild(categoryDiv);
+                    
+                    typeItems.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'item';
+                        
+                        let content = item.content;
+                        let linkCard = '';
+
+                        if (content.includes('http')) {
+                            const urlMatch = content.match(/(https?:\/\/[^\s]+)/g);
+                            if (urlMatch) {
+                                const url = urlMatch[0];
+                                const cleanUrl = getCleanUrl(url);
+                                const firstLetter = cleanUrl.charAt(0).toUpperCase();
+                                
+                                linkCard = `
+                                    <div class="link-card">
+                                        ${item.title ? `<div class="link-title">${item.title}</div>` : ''}
+                                        ${item.description ? `<div class="link-description">${item.description}</div>` : ''}
+                                        <a href="${url}" target="_blank" class="link-url">
+                                            <span class="link-icon">${firstLetter}</span>
+                                            ${cleanUrl}
+                                        </a>
+                                    </div>
+                                `;
+                            }
+                        }
+                        
+                        div.innerHTML = `
+                            <div class="item-header">
+                                <span class="item-type type-${item.type}">${item.type}</span>
+                                <span class="content">${
+                                    content.includes('http') 
+                                    ? content.replace(/(https?:\/\/[^\s]+)/g, '').trim() 
+                                    : content
+                                }</span>
+                                <span class="date">${item.date}</span>
+                                <button class="delete" onclick="deleteItem(${item.id})">×</button>
+                            </div>
+                            ${linkCard}
+                        `;
+                        list.appendChild(div);
+                    });
+                }
+            });
+            
+            hasUnsavedChanges = JSON.stringify(items) !== originalItems;
+        }
+
+        function showUndoNotification() {
+            const existingNotification = document.querySelector('.undo-notification');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+
+            const notification = document.createElement('div');
+            notification.className = 'undo-notification';
+            notification.innerHTML = `
+                Item deleted
+                <button class="undo-button" onclick="undoDelete()">Undo</button>
+            `;
+            document.body.appendChild(notification);
+
+            if (undoTimeout) {
+                clearTimeout(undoTimeout);
+            }
+            undoTimeout = setTimeout(() => {
+                notification.remove();
+                deletedItem = null;
+            }, 5000);
+        }
+
+        function addItem() {
+            const input = document.getElementById('newItem');
+            const type = document.getElementById('type');
+            const titleInput = document.getElementById('linkTitle');
+            const descriptionInput = document.getElementById('linkDescription');
+            
+            if (!input.value.trim()) return;
+
+            const item = {
+                id: Date.now(),
+                content: input.value,
+                type: type.value,
+                date: new Date().toLocaleDateString()
+            };
+
+            if (input.value.includes('http')) {
+                item.title = titleInput.value.trim();
+                item.description = descriptionInput.value.trim();
+                titleInput.value = '';
+                descriptionInput.value = '';
+            }
+
+            items.push(item);
+            localStorage.setItem('items', JSON.stringify(items));
+            hasUnsavedChanges = true;
+            input.value = '';
+            toggleLinkDetails();
+            displayItems();
+        }
+
+        function deleteItem(id) {
+            const itemToDelete = items.find(item => item.id === id);
+            deletedItem = itemToDelete;
+            items = items.filter(item => item.id !== id);
+            localStorage.setItem('items', JSON.stringify(items));
+            hasUnsavedChanges = true;
+            displayItems();
+            showUndoNotification();
+        }
+
+        function undoDelete() {
+            if (deletedItem) {
+                items.push(deletedItem);
+                localStorage.setItem('items', JSON.stringify(items));
+                hasUnsavedChanges = true;
+                displayItems();
+                
+                const notification = document.querySelector('.undo-notification');
+                if (notification) {
+                    notification.remove();
+                }
+                
+                deletedItem = null;
+                if (undoTimeout) {
+                    clearTimeout(undoTimeout);
+                }
+            }
+        }
+
+        function saveChanges() {
+            localStorage.setItem('items', JSON.stringify(items));
+            originalItems = JSON.stringify(items);
+            hasUnsavedChanges = false;
+        }
+
+        window.addEventListener('beforeunload', function(e) {
+            if (hasUnsavedChanges) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+
+        setInterval(() => {
+            if (hasUnsavedChanges) {
+                saveChanges();
+            }
+        }, 30000);
+
+        // Initial setup
+        updateCategoryDropdown();
+        displayItems();
+
+        // Event listeners
+        document.getElementById('newItem').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addItem();
+            }
+        });
+
+        document.getElementById('newItem').addEventListener('input', function(e) {
+            toggleLinkDetails();
+        });
+
+        document.getElementById('newCategory').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addCategory();
+            }
+        });
+    </script>
+</body>
+</html>
